@@ -1,1 +1,1 @@
-# skripsi
+[kaggle server](https://www.kaggle.com/code/vnn777/skripsi/edit)

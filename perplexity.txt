@@ -1,0 +1,208 @@
+# Landasan Teori
+
+## Time Series Forecasting
+
+Time series forecasting merupakan salah satu bidang fundamental dalam analisis data yang memiliki aplikasi luas dalam berbagai domain praktis[1]. Time series didefinisikan sebagai serangkaian observasi yang dikumpulkan secara berurutan dalam interval waktu tertentu, di mana setiap observasi mempertimbangkan komponen waktu sebagai elemen fundamental dalam struktur dan analisisnya[2].
+
+Secara matematis, time series dapat direpresentasikan sebagai:
+
+$$ Y_t = f(t) + \epsilon_t $$
+
+di mana $$Y_t$$ adalah nilai observasi pada waktu $$t$$, $$f(t)$$ adalah fungsi deterministik dari waktu, dan $$\epsilon_t$$ adalah komponen error atau noise.
+
+Time series umumnya terdiri dari empat komponen utama[5]:
+- **Trend**: pola jangka panjang dalam data
+- **Seasonality**: pola berulang dalam periode tertentu
+- **Cyclical**: fluktuasi jangka panjang tanpa periode tetap
+- **Irregular/Random**: komponen acak yang tidak dapat diprediksi
+
+Decomposisi time series dapat dinyatakan dalam bentuk aditif atau multiplikatif:
+
+**Model Aditif:**
+$$ Y_t = T_t + S_t + C_t + I_t $$
+
+**Model Multiplikatif:**
+$$ Y_t = T_t \times S_t \times C_t \times I_t $$
+
+di mana $$T_t$$, $$S_t$$, $$C_t$$, dan $$I_t$$ berturut-turut merepresentasikan komponen trend, seasonal, cyclical, dan irregular pada waktu $$t$$.
+
+## Extreme Gradient Boosting (XGBoost)
+
+XGBoost (Extreme Gradient Boosting) merupakan implementasi optimized dari algoritma gradient boosting yang dirancang untuk meningkatkan performa dan efisiensi komputasi. Algoritma ini menggunakan pendekatan ensemble learning yang menggabungkan multiple weak learners untuk membentuk strong learner[10].
+
+Objective function XGBoost didefinisikan sebagai:
+
+$$ \mathcal{L}(\phi) = \sum_i l(\hat{y}_i, y_i) + \sum_k \Omega(f_k) $$
+
+di mana $$l$$ adalah loss function yang dapat didifferensiasi, $$\Omega(f_k)$$ adalah regularization term untuk tree $$k$$, dan $$\phi$$ merepresentasikan parameter model.
+
+Regularization term dinyatakan sebagai:
+
+$$ \Omega(f) = \gamma T + \frac{1}{2}\lambda \sum_{j=1}^T w_j^2 $$
+
+di mana $$T$$ adalah jumlah leaves, $$w_j$$ adalah weight pada leaf $$j$$, $$\gamma$$ dan $$\lambda$$ adalah hyperparameter regularization.
+
+Untuk iterasi ke-$$t$$, prediksi model adalah:
+
+$$ \hat{y}_i^{(t)} = \hat{y}_i^{(t-1)} + f_t(x_i) $$
+
+di mana $$f_t$$ adalah tree yang ditambahkan pada iterasi $$t$$.
+
+## Recursive Multi-step Forecasting
+
+Recursive forecasting merupakan strategi prediksi multi-step yang menggunakan prediksi sebelumnya sebagai input untuk prediksi berikutnya[4]. Metode ini sangat efektif untuk forecasting horizon jangka menengah hingga panjang.
+
+Untuk horizon forecasting $$h$$, recursive strategy dapat diformulasikan sebagai:
+
+$$ \hat{y}_{t+1} = f(y_t, y_{t-1}, ..., y_{t-p+1}, x_{t+1}) $$
+$$ \hat{y}_{t+2} = f(\hat{y}_{t+1}, y_t, ..., y_{t-p+2}, x_{t+2}) $$
+$$ \vdots $$
+$$ \hat{y}_{t+h} = f(\hat{y}_{t+h-1}, \hat{y}_{t+h-2}, ..., \hat{y}_{t+h-p+1}, x_{t+h}) $$
+
+di mana $$f$$ adalah fungsi prediksi, $$p$$ adalah lag order, dan $$x_t$$ adalah variabel eksogen.
+
+## Feature Engineering untuk Electrical Load Forecasting
+
+### Lag Features
+
+Lag features merupakan nilai historis dari variabel target yang digunakan sebagai prediktor. Untuk electrical load forecasting, lag features dapat diformulasikan sebagai:
+
+$$ X_{lag,i} = y_{t-i} \quad \text{untuk } i = 1, 2, ..., L $$
+
+di mana $$L$$ adalah maksimum lag yang dipertimbangkan.
+
+### Moving Average Features
+
+Moving average features menangkap trend jangka pendek hingga menengah dalam data:
+
+**Simple Moving Average:**
+$$ MA_k(t) = \frac{1}{k} \sum_{i=0}^{k-1} y_{t-i} $$
+
+**Exponential Moving Average:**
+$$ EMA_\alpha(t) = \alpha y_t + (1-\alpha) EMA_\alpha(t-1) $$
+
+di mana $$k$$ adalah window size dan $$\alpha$$ adalah smoothing parameter.
+
+### Calendar Features
+
+Calendar features menangkap pola temporal struktural:
+- **Hour of day**: $$h \in \{0, 1, ..., 23\}$$
+- **Day of week**: $$d \in \{1, 2, ..., 7\}$$
+- **Month of year**: $$m \in \{1, 2, ..., 12\}$$
+- **Holiday indicator**: $$H \in \{0, 1\}$$
+
+### Cyclical Encoding
+
+Untuk menangkap sifat cyclical dari calendar features:
+
+$$ \text{hour\_sin} = \sin\left(\frac{2\pi \times \text{hour}}{24}\right) $$
+$$ \text{hour\_cos} = \cos\left(\frac{2\pi \times \text{hour}}{24}\right) $$
+
+### Weather Features
+
+Variabel meteorologi seperti suhu dapat diintegrasikan sebagai:
+
+$$ X_{weather} = [T_{ambient}, T_{lag1}, T_{lag2}, ..., T_{lagn}] $$
+
+di mana $$T_{ambient}$$ adalah suhu lingkungan dan $$T_{lagi}$$ adalah lag suhu.
+
+## Bayesian Optimization untuk Hyperparameter Tuning
+
+Bayesian Optimization merupakan metode optimasi global yang efisien untuk hyperparameter tuning, terutama ketika evaluasi objective function membutuhkan komputasi yang mahal[19].
+
+Bayesian Optimization menggunakan surrogate model (biasanya Gaussian Process) untuk memodelkan objective function:
+
+$$ f(x) \sim \mathcal{GP}(\mu(x), k(x, x')) $$
+
+di mana $$\mu(x)$$ adalah mean function dan $$k(x, x')$$ adalah covariance function.
+
+Acquisition function yang umum digunakan adalah Expected Improvement (EI):
+
+$$ EI(x) = \mathbb{E}[\max(f(x) - f(x^+), 0)] $$
+
+di mana $$f(x^+)$$ adalah nilai terbaik yang telah ditemukan.
+
+Untuk Gaussian Process, EI dapat dihitung secara analitis:
+
+$$ EI(x) = (\mu(x) - f(x^+))\Phi(Z) + \sigma(x)\phi(Z) $$
+
+di mana $$Z = \frac{\mu(x) - f(x^+)}{\sigma(x)}$$, $$\Phi$$ adalah CDF normal standar, dan $$\phi$$ adalah PDF normal standar.
+
+## Time Series Cross-Validation
+
+### Expanding Window Cross-Validation
+
+Expanding window menggunakan semua data historis yang tersedia untuk training:
+
+$$ \text{Train}_i = \{(x_1, y_1), (x_2, y_2), ..., (x_{n_i}, y_{n_i})\} $$
+$$ \text{Test}_i = \{(x_{n_i+1}, y_{n_i+1}), ..., (x_{n_i+h}, y_{n_i+h})\} $$
+
+di mana $$n_i$$ meningkat setiap fold.
+
+### Sliding Window Cross-Validation
+
+Sliding window menggunakan window size tetap untuk training:
+
+$$ \text{Train}_i = \{(x_{i}, y_{i}), (x_{i+1}, y_{i+1}), ..., (x_{i+w-1}, y_{i+w-1})\} $$
+$$ \text{Test}_i = \{(x_{i+w}, y_{i+w}), ..., (x_{i+w+h-1}, y_{i+w+h-1})\} $$
+
+di mana $$w$$ adalah window size yang konstan.
+
+## Shapley Additive Explanations (SHAP)
+
+SHAP values memberikan unified framework untuk model interpretability berdasarkan game theory. Untuk feature $$i$$, SHAP value didefinisikan sebagai:
+
+$$ \phi_i = \sum_{S \subseteq F \setminus \{i\}} \frac{|S|!(|F|-|S|-1)!}{|F|!}[f(S \cup \{i\}) - f(S)] $$
+
+di mana $$F$$ adalah set semua features, $$S$$ adalah subset features, dan $$f(S)$$ adalah expected prediction ketika hanya menggunakan features dalam $$S$$.
+
+SHAP values memenuhi tiga axiom penting:
+1. **Efficiency**: $$\sum_{i=1}^n \phi_i = f(x) - f(\emptyset)$$
+2. **Symmetry**: Jika $$f(S \cup \{i\}) = f(S \cup \{j\})$$ untuk semua $$S$$, maka $$\phi_i = \phi_j$$
+3. **Dummy**: Jika $$f(S \cup \{i\}) = f(S)$$ untuk semua $$S$$, maka $$\phi_i = 0$$
+
+Untuk tree-based models seperti XGBoost, SHAP values dapat dihitung secara efisien menggunakan TreeSHAP algorithm yang memiliki kompleksitas polynomial time.
+
+Citations:
+[1] https://arxiv.org/ftp/arxiv/papers/1302/1302.6613.pdf
+[2] https://arxiv.org/pdf/2211.14387.pdf
+[3] https://arxiv.org/abs/1805.03714
+[4] https://arxiv.org/pdf/2209.13525.pdf
+[5] https://arxiv.org/pdf/2104.00164.pdf
+[6] https://pmc.ncbi.nlm.nih.gov/articles/PMC11049221/
+[7] https://arxiv.org/abs/1902.01622
+[8] https://arxiv.org/pdf/2011.09937.pdf
+[9] https://arxiv.org/abs/1403.1713
+[10] https://arxiv.org/ftp/arxiv/papers/1703/1703.01977.pdf
+[11] https://pmc.ncbi.nlm.nih.gov/articles/PMC9861550/
+[12] https://arxiv.org/pdf/2307.09148.pdf
+[13] https://arxiv.org/pdf/2001.04601.pdf
+[14] https://arxiv.org/pdf/1002.1940.pdf
+[15] https://arxiv.org/pdf/1805.05232.pdf
+[16] http://arxiv.org/pdf/2409.10142.pdf
+[17] https://arxiv.org/abs/2306.11667
+[18] https://arxiv.org/pdf/1911.01010.pdf
+[19] https://arxiv.org/abs/2309.10613
+[20] https://arxiv.org/abs/2402.02032
+[21] https://arxiv.org/abs/2406.10327
+[22] https://www.semanticscholar.org/paper/424c643b1f944f65806a8f5b3301bc1542d4c3e9
+[23] https://www.semanticscholar.org/paper/ae925a1c765f74506be32d08a8d0f585f06b9ab0
+[24] https://www.semanticscholar.org/paper/6380a7501957500520253c318bb9e4518b0f5d83
+[25] https://arxiv.org/abs/2402.11463
+[26] https://www.semanticscholar.org/paper/b6e35e5f973c3d7dade4139872546d461b57aaf1
+[27] https://www.semanticscholar.org/paper/e70bcb61cc677abc40d1ca7d22661d60d5a2a082
+[28] https://www.semanticscholar.org/paper/e0096d9f014279010264926ef83769de5351d020
+[29] https://arxiv.org/abs/2401.03006
+[30] https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9943994/
+[31] https://www.semanticscholar.org/paper/7fcdb476dc2b0ce55f38b66456264f9af08ae480
+[32] https://www.semanticscholar.org/paper/91c48e153170698a0f3dfb0b60b5dc6c3ab918be
+[33] https://www.semanticscholar.org/paper/c82bd192018d37dd3b58a681e0b774201d7a8a16
+[34] https://www.semanticscholar.org/paper/6539efb0799c2dabe9d984c892eb916ff399a28a
+[35] https://arxiv.org/abs/2411.05371
+[36] https://www.semanticscholar.org/paper/fc90b9f8909f9c2c0fab79ca7ec2f531c7d8270b
+[37] https://arxiv.org/abs/2209.01491
+[38] https://www.semanticscholar.org/paper/c3e2c03d5f70c8180bfb997d2c7018cb13fc3b08
+[39] https://www.semanticscholar.org/paper/27f8c87c4b5b97cfeb1bf511e176e3c82b6c05fd
+
+---
+Answer from Perplexity: pplx.ai/share
