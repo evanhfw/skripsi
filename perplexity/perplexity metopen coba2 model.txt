@@ -1,0 +1,92 @@
+Tentu, ini adalah pendekatan yang sangat baik untuk metodologi penelitian Anda. Melakukan perbandingan sistematis antar-kelompok fitur (feature sets) akan memberikan bukti empiris yang kuat mengenai kontribusi setiap jenis informasi terhadap akurasi peramalan. Ini juga akan menjadi dasar yang solid untuk analisis SHAP di tahap akhir.
+
+Berikut adalah pengembangan dari ide Anda, yang diperluas menjadi beberapa skenario eksperimental yang lebih terstruktur. Skenario ini dirancang untuk menguji hipotesis spesifik secara bertahap, mulai dari model paling sederhana hingga yang paling kompleks.
+
+---
+
+### **4. Perencanaan Input Model: Skenario Eksperimental Berbasis Kombinasi Fitur**
+
+Untuk mengevaluasi kontribusi relatif dari berbagai jenis variabel prediktor, penelitian ini merancang beberapa skenario kombinasi fitur yang akan diuji secara sistematis. Setiap skenario mewakili hipotesis yang berbeda tentang faktor-faktor pendorong beban listrik. Model XGBoost akan dilatih dan dievaluasi untuk setiap skenario, memungkinkan perbandingan performa yang adil dan terukur.
+
+Berikut adalah kombinasi fitur yang akan diuji, dibangun dari tiga variabel dasar yang tersedia: **tanggal, beban (load), dan suhu**.
+
+#### **Skenario A: Model Berbasis Informasi Temporal Internal (Endogen)**
+Skenario ini bertujuan untuk mengukur seberapa baik pola historis dari beban listrik itu sendiri dapat digunakan untuk peramalan.
+
+*   **Model A1: Pola Kalender Murni**
+    *   **Deskripsi:** Model baseline yang hanya menggunakan informasi waktu struktural. Menguji hipotesis bahwa beban listrik sangat dipengaruhi oleh siklus harian, mingguan, dan tahunan.
+    *   **Komponen Fitur:**
+        *   Fitur Kalender: Jam dalam hari, hari dalam minggu, hari dalam tahun, minggu dalam tahun, bulan, tahun.
+
+*   **Model A2: Dinamika Jangka Pendek (Lag)**
+    *   **Deskripsi:** Menguji pengaruh autokorelasi jangka pendek (beban pada jam-jam sebelumnya).
+    *   **Komponen Fitur:**
+        *   Fitur Lag: Beban pada jam t-1, t-2, ..., t-24.
+
+*   **Model A3: Kombinasi Lag dan Kalender**
+    *   **Deskripsi:** Menggabungkan dependensi serial jangka pendek dengan pola siklus kalender. Ini adalah model deret waktu klasik.
+    *   **Komponen Fitur:**
+        *   Fitur Lag (1-24 jam).
+        *   Fitur Kalender.
+
+#### **Skenario B: Model dengan Informasi Struktural dan Peristiwa Khusus**
+Skenario ini menambahkan informasi tentang peristiwa yang diketahui (hari libur) dan tren jangka menengah/panjang.
+
+*   **Model B1: Penambahan Indikator Hari Libur**
+    *   **Deskripsi:** Mengukur dampak signifikan dari hari libur nasional terhadap pola konsumsi listrik.
+    *   **Komponen Fitur:**
+        *   Semua fitur dari Model A3.
+        *   Indikator Hari Libur (variabel biner).
+
+*   **Model B2: Penambahan Tren Jangka Menengah (Moving Averages)**
+    *   **Deskripsi:** Mengintegrasikan informasi tren dari beberapa hari hingga bulan sebelumnya untuk menangkap dinamika beban yang lebih lambat.
+    *   **Komponen Fitur:**
+        *   Semua fitur dari Model B1.
+        *   Fitur Moving Average (Beban): Rata-rata 3 hari, 7 hari, 1 bulan, 3 bulan.
+
+#### **Skenario C: Model dengan Informasi Eksternal (Eksogen)**
+Skenario ini menguji hipotesis bahwa variabel eksternal seperti suhu lingkungan memiliki kekuatan prediksi yang signifikan.
+
+*   **Model C1: Integrasi Suhu Dasar**
+    *   **Deskripsi:** Menambahkan variabel suhu sebagai prediktor langsung.
+    *   **Komponen Fitur:**
+        *   Semua fitur dari Model B2.
+        *   Suhu saat ini (t) dan lag suhu (t-1, t-2, t-3).
+
+*   **Model C2: Integrasi Tren Suhu**
+    *   **Deskripsi:** Model paling komprehensif dari daftar awal Anda. Menggunakan tren suhu (rata-rata bergerak) untuk menangkap kondisi cuaca yang persisten (misalnya, gelombang panas).
+    *   **Komponen Fitur:**
+        *   Semua fitur dari Model B2.
+        *   Fitur Moving Average (Suhu): Rata-rata 1 jam, 3 jam, 7 jam.
+
+#### **Skenario D: Model dengan Rekayasa Fitur Lanjutan**
+Skenario ini mengeksplorasi fitur yang lebih canggih untuk menangkap volatilitas dan interaksi non-linear.
+
+*   **Model D1: Menangkap Volatilitas dan Ekstrem**
+    *   **Deskripsi:** Menguji apakah volatilitas (diukur dengan standar deviasi) dan nilai ekstrem (min/max) dari beban dan suhu pada periode sebelumnya dapat meningkatkan prediksi.
+    *   **Komponen Fitur:**
+        *   Semua fitur dari Model C2.
+        *   Fitur Rolling Statistics (Beban & Suhu): Standar deviasi, min, max dalam jendela 7 hari.
+
+*   **Model D2: Fitur Interaksi dan Siklus**
+    *   **Deskripsi:** Model paling kompleks yang menguji hipotesis interaksi. Misalnya, dampak suhu mungkin berbeda pada hari kerja vs. akhir pekan, atau pada jam sibuk vs. jam malam. Fitur siklus (sin/cos) membantu model memahami sifat waktu yang berkelanjutan.
+    *   **Komponen Fitur:**
+        *   Semua fitur dari Model C2.
+        *   Fitur Siklus: Transformasi sin/cos untuk jam dalam hari dan hari dalam tahun.
+        *   Fitur Interaksi (opsional, tergantung kompleksitas): `Suhu * Jam`, `Suhu * Indikator Hari Kerja`.
+
+### **Ringkasan Tabel Skenario Input Model**
+
+| ID Model | Deskripsi Singkat | Komponen Fitur Utama |
+| :--- | :--- | :--- |
+| **A1** | Baseline Kalender | Kalender |
+| **A2** | Baseline Lag | Lag Beban (1-24 jam) |
+| **A3** | Lag + Kalender | Lag Beban, Kalender |
+| **B1** | + Hari Libur | Lag Beban, Kalender, Hari Libur |
+| **B2** | + Tren Beban | Lag Beban, Kalender, Hari Libur, MA Beban |
+| **C1** | + Suhu Dasar | Fitur B2 + Lag Suhu |
+| **C2** | + Tren Suhu | Fitur B2 + MA Suhu |
+| **D1** | + Volatilitas | Fitur C2 + Rolling Std Dev/Min/Max |
+| **D2** | + Interaksi & Siklus | Fitur C2 + Fitur Siklus/Interaksi |
+
+Dengan mengadopsi kerangka kerja eksperimental ini, penelitian Anda dapat secara metodis mengidentifikasi kombinasi fitur yang paling optimal. Hasil perbandingan ini akan menjadi landasan yang kuat untuk justifikasi model akhir yang akan dianalisis lebih dalam menggunakan SHAP, sehingga memperkuat kontribusi dan kesimpulan penelitian Anda.
